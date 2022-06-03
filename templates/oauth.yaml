@@ -1,0 +1,32 @@
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+  labels:
+    {{- include "cluster-oauth.labels" . | nindent 4 }}
+spec:
+  identityProviders:
+  - htpasswd:
+      fileData:
+        name: htpass-secret
+    mappingMethod: claim
+    name: developer
+    type: HTPasswd
+  - ldap:
+      attributes:
+        email:
+        - mail
+        id:
+        - dn
+        name:
+        - cn
+        preferredUsername:
+        - sAMAccountName
+      bindDN: {{ .Values.ldap.bindDN }}
+      bindPassword:
+        name: ldap-secret
+      insecure: true
+      url: {{ .Values.ldap.url }}
+    mappingMethod: claim
+    name: ldap
+    type: LDAP

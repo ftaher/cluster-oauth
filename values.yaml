@@ -1,0 +1,3 @@
+ldap:
+  bindDN: "CN=OpenShif,OU=Service Accounts,OU=Users,DC=corp,DC=ae"
+  url: "ldap://example.com:389/DC=corp,DC=ae"
