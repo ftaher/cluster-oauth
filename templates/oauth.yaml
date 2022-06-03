@@ -24,7 +24,7 @@ spec:
       bindPassword:
         name: ldap-secret
       insecure: true
-      url: "ldap://example1.com:389/DC=corp,DC=ae"
+      url: "ldap://example2.com:389/DC=corp,DC=ae"
     mappingMethod: claim
     name: ldap
     type: LDAP
