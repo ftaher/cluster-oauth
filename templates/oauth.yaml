@@ -2,8 +2,6 @@ apiVersion: config.openshift.io/v1
 kind: OAuth
 metadata:
   name: cluster
-  labels:
-    {{- include "cluster-oauth.labels" . | nindent 4 }}
 spec:
   identityProviders:
   - htpasswd:
@@ -22,11 +20,11 @@ spec:
         - cn
         preferredUsername:
         - sAMAccountName
-      bindDN: {{ .Values.ldap.bindDN }}
+      bindDN: openshift
       bindPassword:
         name: ldap-secret
       insecure: true
-      url: {{ .Values.ldap.url }}
+      url: "ldap://example.com:389/DC=corp,DC=ae"
     mappingMethod: claim
     name: ldap
     type: LDAP
