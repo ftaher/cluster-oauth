@@ -1,3 +1,8 @@
+function (
+	bindDN="openshift",
+	url="ldap://example.com:389/DC=example,DC=com"
+)
+
 [{
     "apiVersion": "config.openshift.io/v1",
     "kind": "OAuth",
