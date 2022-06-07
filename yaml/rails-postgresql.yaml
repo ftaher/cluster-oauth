@@ -1,0 +1,336 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    labels:
+      app: rails-postgresql-example
+      template: rails-postgresql-example
+    name: rails-postgresql-example
+  stringData:
+    application-password: secret
+    application-user: openshift
+    database-password: 1Ralaywf
+    database-user: userGCG
+    keybase: cx45pj1r7fx4ruvjcgskgpps7onc3ehi3teaywaak2g1lxc7ndcug3aigj4158liw2hjjsdn2y4gp6cxeqbr310cit4nd41racnbikh5ycesstnr4lmhj5d7458odg6
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes and load balances the application pods
+      openshift.io/generated-by: OpenShiftNewApp
+      service.alpha.openshift.io/dependencies: '[{"name": "postgresql", "kind": "Service"}]'
+    creationTimestamp: null
+    labels:
+      app: rails-postgresql-example
+      template: rails-postgresql-example
+    name: rails-postgresql-example
+  spec:
+    ports:
+    - name: web
+      port: 8080
+      targetPort: 8080
+    selector:
+      name: rails-postgresql-example
+  status:
+    loadBalancer: {}
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    labels:
+      app: rails-postgresql-example
+      template: rails-postgresql-example
+    name: rails-postgresql-example
+  spec:
+    to:
+      kind: Service
+      name: rails-postgresql-example
+      weight: null
+  status: {}
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the application image
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    labels:
+      app: rails-postgresql-example
+      template: rails-postgresql-example
+    name: rails-postgresql-example
+  spec:
+    lookupPolicy:
+      local: false
+  status:
+    dockerImageRepository: ""
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the application
+      openshift.io/generated-by: OpenShiftNewApp
+      template.alpha.openshift.io/wait-for-ready: "true"
+    creationTimestamp: null
+    labels:
+      app: rails-postgresql-example
+      template: rails-postgresql-example
+    name: rails-postgresql-example
+  spec:
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: rails-postgresql-example:latest
+    postCommit:
+      script: bundle exec rake test
+    resources: {}
+    source:
+      git:
+        uri: https://github.com/sclorg/rails-ex.git
+      type: Git
+    strategy:
+      sourceStrategy:
+        env:
+        - name: RUBYGEM_MIRROR
+        from:
+          kind: ImageStreamTag
+          name: ruby:2.6-ubi8
+          namespace: openshift
+      type: Source
+    triggers:
+    - type: ImageChange
+    - type: ConfigChange
+    - github:
+        secret: 1HhArhJOiPBLiP3PExLkWMQFGWyDnsRnLYy3yYEf
+      type: GitHub
+  status:
+    lastVersion: 0
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: Defines how to deploy the application server
+      openshift.io/generated-by: OpenShiftNewApp
+      template.alpha.openshift.io/wait-for-ready: "true"
+    creationTimestamp: null
+    labels:
+      app: rails-postgresql-example
+      template: rails-postgresql-example
+    name: rails-postgresql-example
+  spec:
+    replicas: 1
+    selector:
+      name: rails-postgresql-example
+    strategy:
+      recreateParams:
+        pre:
+          execNewPod:
+            command:
+            - ./migrate-database.sh
+            containerName: rails-postgresql-example
+          failurePolicy: Abort
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          name: rails-postgresql-example
+        name: rails-postgresql-example
+      spec:
+        containers:
+        - env:
+          - name: DATABASE_SERVICE_NAME
+            value: postgresql
+          - name: POSTGRESQL_USER
+            valueFrom:
+              secretKeyRef:
+                key: database-user
+                name: rails-postgresql-example
+          - name: POSTGRESQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: rails-postgresql-example
+          - name: POSTGRESQL_DATABASE
+            value: root
+          - name: SECRET_KEY_BASE
+            valueFrom:
+              secretKeyRef:
+                key: keybase
+                name: rails-postgresql-example
+          - name: POSTGRESQL_MAX_CONNECTIONS
+            value: "100"
+          - name: POSTGRESQL_SHARED_BUFFERS
+            value: 12MB
+          - name: APPLICATION_DOMAIN
+          - name: APPLICATION_USER
+            valueFrom:
+              secretKeyRef:
+                key: application-user
+                name: rails-postgresql-example
+          - name: APPLICATION_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: application-password
+                name: rails-postgresql-example
+          - name: RAILS_ENV
+            value: production
+          image: ' '
+          livenessProbe:
+            httpGet:
+              path: /articles
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 3
+          name: rails-postgresql-example
+          ports:
+          - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /articles
+              port: 8080
+            initialDelaySeconds: 5
+            timeoutSeconds: 3
+          resources:
+            limits:
+              memory: 512Mi
+    test: false
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - rails-postgresql-example
+        from:
+          kind: ImageStreamTag
+          name: rails-postgresql-example:latest
+      type: ImageChange
+    - type: ConfigChange
+  status:
+    availableReplicas: 0
+    latestVersion: 0
+    observedGeneration: 0
+    replicas: 0
+    unavailableReplicas: 0
+    updatedReplicas: 0
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes the database server
+      openshift.io/generated-by: OpenShiftNewApp
+    creationTimestamp: null
+    labels:
+      app: rails-postgresql-example
+      template: rails-postgresql-example
+    name: postgresql
+  spec:
+    ports:
+    - name: postgresql
+      port: 5432
+      targetPort: 5432
+    selector:
+      name: postgresql
+  status:
+    loadBalancer: {}
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: Defines how to deploy the database
+      openshift.io/generated-by: OpenShiftNewApp
+      template.alpha.openshift.io/wait-for-ready: "true"
+    creationTimestamp: null
+    labels:
+      app: rails-postgresql-example
+      template: rails-postgresql-example
+    name: postgresql
+  spec:
+    replicas: 1
+    selector:
+      name: postgresql
+    strategy:
+      resources: {}
+      type: Recreate
+    template:
+      metadata:
+        annotations:
+          openshift.io/generated-by: OpenShiftNewApp
+        creationTimestamp: null
+        labels:
+          name: postgresql
+        name: postgresql
+      spec:
+        containers:
+        - env:
+          - name: POSTGRESQL_USER
+            valueFrom:
+              secretKeyRef:
+                key: database-user
+                name: rails-postgresql-example
+          - name: POSTGRESQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: rails-postgresql-example
+          - name: POSTGRESQL_DATABASE
+            value: root
+          - name: POSTGRESQL_MAX_CONNECTIONS
+            value: "100"
+          - name: POSTGRESQL_SHARED_BUFFERS
+            value: 12MB
+          image: ' '
+          livenessProbe:
+            exec:
+              command:
+              - /usr/libexec/check-container
+              - --live
+            initialDelaySeconds: 120
+            timeoutSeconds: 10
+          name: postgresql
+          ports:
+          - containerPort: 5432
+          readinessProbe:
+            exec:
+              command:
+              - /usr/libexec/check-container
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          resources:
+            limits:
+              memory: 512Mi
+          volumeMounts:
+          - mountPath: /var/lib/pgsql/data
+            name: data
+        volumes:
+        - emptyDir: {}
+          name: data
+    test: false
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - postgresql
+        from:
+          kind: ImageStreamTag
+          name: postgresql:12-el8
+          namespace: openshift
+      type: ImageChange
+    - type: ConfigChange
+  status:
+    availableReplicas: 0
+    latestVersion: 0
+    observedGeneration: 0
+    replicas: 0
+    unavailableReplicas: 0
+    updatedReplicas: 0
+kind: List
+metadata: {}
